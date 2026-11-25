@@ -208,13 +208,23 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
     if args.test_push:
+        when = (f"{cfg.get('schedule', {}).get('hour', 15):02d}:"
+                f"{cfg.get('schedule', {}).get('minute', 30):02d}")
+        md = (
+            "## ✅ 测试消息\n\n"
+            f"**{cfg.site_name}** 的天文摄影推送已配置成功。\n\n"
+            "### 接下来会发生什么\n\n"
+            f"- 每天 **{when}** 自动推送当晚报告\n"
+            "- 内容包括：今晚评分、最佳时段、值得拍的目标、未来 7 夜\n"
+            "- 想立刻看完整效果：运行 `python3 run.py --dry-run`\n\n"
+            "---\n\n这是测试消息，无需回复。"
+        )
         results = send_all(
             cfg,
-            text=f"✅ 测试消息\n{cfg.site_name} 的天文摄影推送已配置成功。\n"
-                 f"推送时间：每天 {cfg.get('schedule', {}).get('hour', 15):02d}:"
-                 f"{cfg.get('schedule', {}).get('minute', 30):02d}",
-            text_html=f"✅ <b>测试消息</b>\n{cfg.site_name} 的天文摄影推送已配置成功。",
-            title="天文推送测试",
+            text=md,
+            text_html=f"✅ <b>测试消息</b>\n{cfg.site_name} 的推送已配置成功，每天 {when} 发送。",
+            title="✅ 配置成功",
+            md=md,
             dry_run=args.dry_run,
         )
         for r in results:
@@ -232,6 +242,7 @@ def main(argv: list[str] | None = None) -> int:
 
     text = build_text(report)
     html_text = build_telegram_html(report)
+    md_text = build_markdown(report)
 
     print("=" * 64)
     print(text)
@@ -241,10 +252,11 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(to_json(report), ensure_ascii=False, indent=2))
 
     if not args.no_save:
-        path = save_archive(ROOT, report.night.day.isoformat(), build_markdown(report))
+        path = save_archive(ROOT, report.night.day.isoformat(), md_text)
         print(f"[存档] {path}")
 
-    results = send_all(cfg, text, html_text, report.headline, dry_run=args.dry_run)
+    results = send_all(cfg, text, html_text, report.push_title, md=md_text,
+                       dry_run=args.dry_run)
     if results:
         for r in results:
             print(f"[推送:{r.channel}] {'OK' if r.ok else 'FAIL'} {r.detail}")

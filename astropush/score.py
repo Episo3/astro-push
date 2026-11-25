@@ -355,7 +355,6 @@ def build_suggestions(night: Night, cfg: Config, sw: SpaceWeather,
     tz = ZoneInfo(cfg.tz_name)
     lat, lon = cfg.lat, cfg.lon
     out: list[Suggestion] = []
-    light_note = "" if cfg.loc.get("bortle", 5) <= 4 else "（市区光害，深空建议周末去暗夜点）"
 
     # 1) 极光
     if aurora.chance in ("相机可拍", "肉眼可辨", "强爆发"):
@@ -411,8 +410,8 @@ def build_suggestions(night: Night, cfg: Config, sw: SpaceWeather,
         out.append(Suggestion(
             title=f"{dso.name} {dso.cname}（{dso.kind}，{dso.mag:.1f} 等）",
             kind="深空",
-            detail=(f"窗口内最高 {alt_at_best:.0f}°，月亮离它 {vis['moon_sep']:.0f}°，{dso.band}滤镜"
-                    + (f"；{dso.note}" if dso.note else "") + light_note),
+            detail=(f"月亮离它 {vis['moon_sep']:.0f}°，用{dso.band}滤镜"
+                    + (f"；{dso.note}" if dso.note else "")),
             when=t_show.strftime("%H:%M"),
             where=f"方位 {az_show:.0f}°（{A.compass_name(az_show)}），高度 {alt_show:.0f}°",
             score=val * 100,

@@ -120,6 +120,9 @@ class TestNotify(unittest.TestCase):
         self.assertEqual(CAPTURED[-1]["path"], "/sct/send")
         self.assertEqual(CAPTURED[-1]["body"]["title"], "今晚 A 级")
         self.assertEqual(CAPTURED[-1]["body"]["desp"], "正文内容")
+        # 传了 Markdown 时优先发 Markdown（Server酱 详情页会渲染）
+        notify.send_webhook(cfg, "纯文本", "标题", md="## 小节\n\n- 一行一条")
+        self.assertEqual(CAPTURED[-1]["body"]["desp"], "## 小节\n\n- 一行一条")
 
     def test_serverchan_missing_key(self):
         cfg = self._cfg(["webhook"], "serverchan", {})

@@ -101,7 +101,8 @@ def serverchan_url(key: str) -> str:
     return f"https://sctapi.ftqq.com/{key}.send"
 
 
-def send_webhook(cfg: Config, text: str, title: str, html_text: str = "") -> SendResult:
+def send_webhook(cfg: Config, text: str, title: str, html_text: str = "",
+                 md: str = "") -> SendResult:
     kind = cfg.webhook_type
     if kind == "feishu":
         url = cfg.env_val("FEISHU_WEBHOOK")
@@ -118,7 +119,7 @@ def send_webhook(cfg: Config, text: str, title: str, html_text: str = "") -> Sen
             return SendResult("webhook", False, "缺少 WECOM_WEBHOOK")
         status, body = _post_json(url, {
             "msgtype": "markdown",
-            "markdown": {"content": _limit_bytes(text, 3900)},
+            "markdown": {"content": _limit_bytes(md or text, 3900)},
         })
         return _judge("企业微信", status, body)
     if kind == "serverchan":
@@ -127,7 +128,7 @@ def send_webhook(cfg: Config, text: str, title: str, html_text: str = "") -> Sen
             return SendResult("webhook", False, "缺少 SERVERCHAN_KEY")
         status, body = _post_form(serverchan_url(key), {
             "title": title,
-            "desp": text,
+            "desp": md or text,   # Server酱 的 desp 支持 Markdown
         })
         ok = False
         try:
@@ -151,7 +152,8 @@ def send_webhook(cfg: Config, text: str, title: str, html_text: str = "") -> Sen
     if not url:
         return SendResult("webhook", False, "缺少 WEBHOOK_URL")
     status, body = _post_json(url, {
-        "title": title, "text": text, "html": html_text, "kind": "astro-nightly",
+        "title": title, "text": text, "markdown": md or text,
+        "html": html_text, "kind": "astro-nightly",
     })
     return _judge("通用 webhook", status, body)
 
@@ -188,7 +190,7 @@ def save_archive(root: Path, day_key: str, text: str) -> Path:
 
 
 def send_all(cfg: Config, text: str, text_html: str, title: str,
-             dry_run: bool = False) -> list[SendResult]:
+             md: str = "", dry_run: bool = False) -> list[SendResult]:
     results: list[SendResult] = []
     for ch in cfg.channels:
         if ch == "file":
@@ -200,7 +202,7 @@ def send_all(cfg: Config, text: str, text_html: str, title: str,
             if ch == "telegram":
                 results.append(send_telegram(cfg, text_html))
             elif ch in ("webhook", "feishu", "wecom", "serverchan", "bark"):
-                results.append(send_webhook(cfg, text, title, text_html))
+                results.append(send_webhook(cfg, text, title, text_html, md))
             else:
                 results.append(SendResult(ch, False, "未知通道"))
         except Exception as exc:  # 单通道异常不拖累其他
