@@ -1,0 +1,55 @@
+name: 每日天文推送
+
+# 为什么有两个 cron：
+#   GitHub Actions 的 cron 只认 UTC。芝加哥夏令时 UTC-5、冬令时 UTC-6，
+#   所以 15:30 本地 = 20:30 UTC（夏）/ 21:30 UTC（冬）。
+#   两个都触发，脚本用 --if-due 检查本地时间，只有对的那个会真正执行。
+on:
+  schedule:
+    - cron: "30 20 * * *"   # 夏令时 15:30 CDT
+    - cron: "30 21 * * *"   # 冬令时 15:30 CST
+  workflow_dispatch: {}      # 支持手动点击运行（立即推送，不检查时间）
+
+concurrency:
+  group: astro-daily
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # 本项目零第三方依赖（纯标准库），这步只是为了固定 Python 版本
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 到点自动推送
+        if: github.event_name == 'schedule'
+        env:
+          SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}
+          PUSH_CHANNELS: webhook
+          PUSH_WEBHOOK_TYPE: serverchan
+        run: python3 run.py --if-due
+
+      - name: 手动立即推送
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}
+          PUSH_CHANNELS: webhook
+          PUSH_WEBHOOK_TYPE: serverchan
+        run: python3 run.py
+
+      - name: 保留 30 天报告存档
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: astro-report-${{ github.run_id }}
+          path: reports/
+          retention-days: 30
+          if-no-files-found: ignore

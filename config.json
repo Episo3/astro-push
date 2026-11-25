@@ -1,0 +1,61 @@
+{
+  "location": {
+    "name": "Madison, WI",
+    "lat": 43.0731,
+    "lon": -89.4012,
+    "tz": "America/Chicago",
+    "bortle": 5,
+    "elevation_m": 266
+  },
+  "schedule": {
+    "hour": 15,
+    "minute": 30
+  },
+  "channels": [
+    "file",
+    "webhook"
+  ],
+  "webhook": {
+    "type": "serverchan"
+  },
+  "thresholds": {
+    "min_dark_hours": 0.5,
+    "min_target_alt": 20,
+    "moon_dark_illum": 0.35,
+    "aurora_kp_min": 6,
+    "grade_a": 85,
+    "grade_b": 70,
+    "grade_c": 50,
+    "max_report_chars": 3800
+  },
+  "dark_sites": [
+    {
+      "name": "Governor Dodge State Park",
+      "lat": 43.02,
+      "lon": -90.1,
+      "bortle": 4,
+      "drive": "约 55 分钟"
+    },
+    {
+      "name": "Blue Mound State Park",
+      "lat": 43.03,
+      "lon": -89.85,
+      "bortle": 4,
+      "drive": "约 45 分钟"
+    },
+    {
+      "name": "Devil's Lake State Park",
+      "lat": 43.42,
+      "lon": -89.73,
+      "bortle": 4,
+      "drive": "约 50 分钟"
+    },
+    {
+      "name": "Kickapoo Valley Reserve",
+      "lat": 43.56,
+      "lon": -90.65,
+      "bortle": 3,
+      "drive": "约 1 小时 40 分"
+    }
+  ]
+}
